@@ -20,6 +20,14 @@ export interface PageInfo {
 
 /**
  * Service to interact with Playwright MCP server for web page inspection and interaction
+ * 
+ * SETUP INSTRUCTIONS:
+ * To use with a real Playwright MCP server, you need to:
+ * 1. Install and configure a Playwright MCP server (e.g., Microsoft's official Playwright MCP server)
+ * 2. Register the MCP server with VS Code using `lm.registerMcpServerDefinitionProvider`
+ * 3. Configure the server to expose tools with the expected naming convention (mcp_playwright_*)
+ * 
+ * The service currently includes mock responses for development/testing when no real MCP server is available.
  */
 export class PlaywrightMcpService {
 	private _mcpTools: LanguageModelToolInformation[] = [];
@@ -513,8 +521,12 @@ export class PlaywrightMcpService {
 	}
 
 	private _getMockOutput(toolName: string, params: any): any {
-		// This provides mock outputs for testing until real MCP integration is configured
-		// In production, this would be removed and real MCP responses would be used
+		// DEVELOPMENT NOTE: This provides mock outputs for testing and development
+		// when the actual Playwright MCP server is not configured or available.
+		// In production with a real MCP server, this method would not be called
+		// and real MCP responses would be used instead.
+		
+		this._logService.debug(`Using mock output for MCP tool: ${toolName} (real MCP server not available)`);
 		
 		switch (toolName) {
 			case 'mcp_playwright_navigate':

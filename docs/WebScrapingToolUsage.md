@@ -11,6 +11,29 @@ The Web Scraping Tool integrates Copilot chat logic with Playwright MCP to creat
 5. **Executes** the script and validates the output
 6. **Iteratively improves** the script until all requested fields are successfully extracted
 
+## Prerequisites
+
+### Playwright MCP Server Setup
+
+To use the full functionality of the Web Scraping Tool, you need to set up a Playwright MCP server:
+
+1. **Install Playwright MCP Server**:
+   ```bash
+   npm install -g @microsoft/playwright-mcp-server
+   # or use the official Microsoft Playwright MCP server implementation
+   ```
+
+2. **Configure MCP Server in VS Code**:
+   The server should be registered with VS Code's MCP system and expose the following tools:
+   - `mcp_playwright_navigate` - Navigate to a URL
+   - `mcp_playwright_screenshot` - Take page screenshots  
+   - `mcp_playwright_get_page_content` - Get HTML content
+   - `mcp_playwright_evaluate` - Execute JavaScript on the page
+   - `mcp_playwright_find_elements` - Find elements using CSS selectors
+
+3. **Development Mode**:
+   When no MCP server is available, the service falls back to mock responses for testing and development.
+
 ## Usage Examples
 
 ### Example 1: E-commerce Product Scraping

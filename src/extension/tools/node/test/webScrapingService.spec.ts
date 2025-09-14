@@ -53,8 +53,12 @@ describe('WebScrapingService', () => {
 		const url = 'https://example.com';
 		const extractionFields: string[] = [];
 		
-		const result = await webScrapingService.processWebScraping(url, extractionFields, CancellationToken.None);
-		expect(result).toBeDefined();
-		expect(result.extractionFields).toEqual([]);
+		try {
+			await webScrapingService.processWebScraping(url, extractionFields, CancellationToken.None);
+			expect.fail('Should have thrown an error for empty extraction fields');
+		} catch (error) {
+			expect(error).toBeDefined();
+			expect((error as Error).message).toContain('No extraction fields specified');
+		}
 	});
 });
