@@ -8,6 +8,7 @@ import { ILogService } from '../../../platform/log/common/logService';
 import { IFileService } from '../../../platform/fileSystem/common/fileSystem';
 import { URI } from '../../../util/vs/base/common/uri';
 import { PlaywrightMcpService } from './playwrightMcpService';
+import { PythonScriptExecutorService } from './pythonScriptExecutorService';
 import { IInstantiationService } from '../../../util/vs/platform/instantiation/common/instantiation';
 
 export interface WebScrapingResult {
@@ -29,11 +30,37 @@ export class WebScrapingService {
 		extractionFields: string[],
 		token: CancellationToken
 	): Promise<WebScrapingResult> {
+		// Validate inputs
+		if (!url || !this._isValidUrl(url)) {
+			throw new Error(`Invalid URL provided: ${url}`);
+		}
+		
+		if (!extractionFields || extractionFields.length === 0) {
+			throw new Error('No extraction fields specified');
+		}
+
 		this._logService.info(`Starting web scraping for ${url} with fields: ${extractionFields.join(', ')}`);
 
 		const playwrightService = this._instantiationService.createInstance(PlaywrightMcpService);
+		const scriptExecutor = this._instantiationService.createInstance(PythonScriptExecutorService);
 
 		try {
+			// Check Python environment first
+			const envCheck = await scriptExecutor.checkPythonEnvironment();
+			if (!envCheck.available) {
+				throw new Error('Python is not available in the environment');
+			}
+			
+			// Install missing packages if needed
+			const requiredPackages = ['requests', 'beautifulsoup4', 'selenium'];
+			const missingPackages = requiredPackages.filter(pkg => !envCheck.packages.includes(pkg));
+			if (missingPackages.length > 0) {
+				this._logService.info(`Installing missing packages: ${missingPackages.join(', ')}`);
+				const installed = await scriptExecutor.installRequiredPackages(missingPackages);
+				if (!installed) {
+					this._logService.warn('Some packages could not be installed, script may not work correctly');
+				}
+			}
 			// Step 1: Navigate to the page using Playwright MCP to inspect structure
 			const pageInfo = await playwrightService.inspectPage(url, token);
 			
@@ -47,12 +74,25 @@ export class WebScrapingService {
 			let pythonScript = this._generatePythonScript(url, fieldMappings, approach);
 			
 			// Step 5: Execute script and check output
-			let extractedData = await this._executeScript(pythonScript, token);
+			let executionResult = await scriptExecutor.executeScript(pythonScript, token);
+			let extractedData = executionResult.success ? executionResult.output : {};
 			let iterations = 1;
 			
 			// Step 6: Iterative improvement
 			while (iterations < 5 && !this._isDataComplete(extractedData, extractionFields)) {
 				this._logService.info(`Iteration ${iterations + 1}: Refining script`);
+				
+				// If the last execution failed completely, use fallback approach
+				if (!executionResult.success && iterations === 1) {
+					// Switch approach if first attempt failed
+					const newApproach = approach === 'http' ? 'selenium' : 'http';
+					this._logService.info(`Switching from ${approach} to ${newApproach} approach due to execution failure`);
+					pythonScript = this._generatePythonScript(url, fieldMappings, newApproach);
+					executionResult = await scriptExecutor.executeScript(pythonScript, token);
+					extractedData = executionResult.success ? executionResult.output : {};
+					iterations++;
+					continue;
+				}
 				
 				// Compare with original page data from Playwright and refine script
 				const refinedScript = await this._refineScript(
@@ -71,8 +111,18 @@ export class WebScrapingService {
 				}
 				
 				pythonScript = refinedScript;
-				extractedData = await this._executeScript(pythonScript, token);
+				executionResult = await scriptExecutor.executeScript(pythonScript, token);
+				extractedData = executionResult.success ? executionResult.output : {};
 				iterations++;
+			}
+			
+			// Log final results
+			if (this._isDataComplete(extractedData, extractionFields)) {
+				this._logService.info(`Successfully extracted all requested fields after ${iterations} iteration(s)`);
+			} else {
+				this._logService.warn(`Could not extract all requested fields after ${iterations} iteration(s). Missing: ${
+					extractionFields.filter(field => !extractedData[field] || extractedData[field] === '').join(', ')
+				}`);
 			}
 			
 			// Step 7: Save script locally
@@ -311,19 +361,6 @@ if __name__ == "__main__":
 		return script;
 	}
 
-	private async _executeScript(pythonScript: string, token: CancellationToken): Promise<any> {
-		// In a real implementation, this would execute the Python script
-		// For now, simulating execution result
-		this._logService.info('Executing Python script');
-		
-		// Simulated execution result
-		return {
-			"product name": "Sample Product",
-			"price": "$19.99",
-			"currency": "USD"
-		};
-	}
-
 	private _isDataComplete(extractedData: any, extractionFields: string[]): boolean {
 		// Check if all requested fields have been extracted with non-null values
 		return extractionFields.every(field => 
@@ -396,6 +433,15 @@ if __name__ == "__main__":
 			this._logService.info(`Script saved to ${scriptPath.fsPath}`);
 		} catch (error) {
 			this._logService.error('Failed to save script', error);
+		}
+	}
+
+	private _isValidUrl(url: string): boolean {
+		try {
+			new URL(url);
+			return true;
+		} catch {
+			return false;
 		}
 	}
 }
