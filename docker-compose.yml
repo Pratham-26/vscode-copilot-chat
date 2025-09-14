@@ -1,0 +1,39 @@
+version: '3.8'
+
+services:
+  copilot-chat-api:
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - COPILOT_API_PORT=3000
+      - COPILOT_API_HOST=0.0.0.0
+      - COPILOT_API_LOG_LEVEL=info
+      - COPILOT_API_AUTH_REQUIRED=false
+      # Add your API keys here
+      # - OPENAI_API_KEY=your-openai-key
+      # - ANTHROPIC_API_KEY=your-anthropic-key
+      # - GITHUB_TOKEN=your-github-token
+    volumes:
+      # Mount workspace for file operations (optional)
+      - ./workspace:/workspace:ro
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Optional: Redis for session storage in production
+  # redis:
+  #   image: redis:7-alpine
+  #   restart: unless-stopped
+  #   volumes:
+  #     - redis_data:/data
+
+# volumes:
+#   redis_data:
