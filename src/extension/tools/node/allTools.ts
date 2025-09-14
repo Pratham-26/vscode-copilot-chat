@@ -40,3 +40,4 @@ import './userPreferencesTool';
 import './vscodeAPITool';
 import './vscodeCmdTool';
 import './toolReplayTool';
+import './webScrapingTool';

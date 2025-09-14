@@ -1013,6 +1013,37 @@
 				}
 			},
 			{
+				"name": "copilot_webScraping",
+				"displayName": "Web Scraping Tool",
+				"toolReferenceName": "webScraping",
+				"when": "!isWeb",
+				"canBeReferencedInPrompt": true,
+				"icon": "$(globe)",
+				"userDescription": "Extract data from web pages and generate Python scripts for web scraping",
+				"modelDescription": "Navigate to a URL using Playwright MCP, identify data extraction fields, determine the appropriate scraping approach (HTTP vs Selenium), generate a Python script to extract the data, and iteratively improve the script until all requested fields are successfully extracted. Returns both the generated Python script and extracted data as JSON.",
+				"tags": [],
+				"inputSchema": {
+					"type": "object",
+					"properties": {
+						"url": {
+							"type": "string",
+							"description": "The URL to scrape data from."
+						},
+						"extractionFields": {
+							"type": "array",
+							"items": {
+								"type": "string"
+							},
+							"description": "List of fields to extract from the webpage (e.g., 'product name', 'price', 'currency')."
+						}
+					},
+					"required": [
+						"url",
+						"extractionFields"
+					]
+				}
+			},
+			{
 				"name": "copilot_findTestFiles",
 				"displayName": "%copilot.tools.findTestFiles.name%",
 				"icon": "$(beaker)",

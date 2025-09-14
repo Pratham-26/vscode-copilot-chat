@@ -55,7 +55,8 @@ export enum ToolName {
 	EditFilesPlaceholder = 'edit_files',
 	ExecutePrompt = 'execute_prompt',
 	ExecuteTask = 'execute_task',
-	CoreConfirmationTool = 'vscode_get_confirmation'
+	CoreConfirmationTool = 'vscode_get_confirmation',
+	WebScraping = 'web_scraping'
 }
 
 export enum ContributedToolName {
@@ -100,7 +101,8 @@ export enum ContributedToolName {
 	ToolReplay = 'copilot_toolReplay',
 	EditFilesPlaceholder = 'copilot_editFiles',
 	ExecutePrompt = 'execute_prompt',
-	ExecuteTask = 'execute_task',
+	ExecuteTask = 'execute_task',,
+	WebScraping = 'copilot_webScraping'
 }
 
 const toolNameToContributedToolNames = new Map<ToolName, ContributedToolName>();
