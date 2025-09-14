@@ -4041,7 +4041,9 @@
 		"api:build": "tsx .esbuild.ts --api",
 		"api:start": "tsx src/api/bin/copilot-chat-api.ts",
 		"api:dev": "tsx --watch src/api/bin/copilot-chat-api.ts",
-		"api:example": "tsx src/api/examples/example.ts"
+		"api:example": "tsx src/api/examples/example.ts",
+		"api:test:integration": "tsx src/api/examples/mcp-integration-test.ts",
+		"api:test": "vitest run src/api/test/"
 	},
 	"devDependencies": {
 		"@azure/identity": "4.9.1",
